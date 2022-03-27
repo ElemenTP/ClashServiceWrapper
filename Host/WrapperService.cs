@@ -2,13 +2,16 @@
 using System.IO.Pipes;
 using System.ServiceProcess;
 using System.Text;
-using WinSW.Native;
+using static WinSW.Native.ConsoleApis;
+
 namespace ClashSvcHost
 {
     public sealed class WrapperService : ServiceBase
     {
         private Process? process;
         private volatile NamedPipeClientStream? pipeClientStream;
+        private readonly ManualResetEventSlim stopEvent;
+        private volatile bool stopTriggered = false;
         private volatile bool notExpected = false;
 
         public WrapperService()
@@ -18,7 +21,7 @@ namespace ClashSvcHost
             CanShutdown = true;
             CanPauseAndContinue = false;
             AutoLog = false;
-            ConsoleApis.SetConsoleOutputCP(ConsoleApis.CP_UTF8);
+            stopEvent = new();
         }
 
         protected override void OnStart(string[] args)
@@ -30,16 +33,23 @@ namespace ClashSvcHost
             }
             try
             {
-                pipeClientStream = new(".", args[0], PipeDirection.Out, PipeOptions.WriteThrough);
+                pipeClientStream = new(".", args[0], PipeDirection.Out, PipeOptions.WriteThrough | PipeOptions.Asynchronous);
                 pipeClientStream.Connect(500);
             }
-            catch (Exception)
+            catch
             {
                 Stop();
                 return;
             }
-            Task checkHealthTask = new(CheckHealth);
-            checkHealthTask.Start();
+            Task.Run(() =>
+            {
+                stopEvent.Wait();
+                if (!stopTriggered)
+                {
+                    Stop();
+                }
+            });
+            Task.Run(CheckHealth);
             try
             {
                 ProcessStartInfo info = new()
@@ -54,17 +64,46 @@ namespace ClashSvcHost
                     RedirectStandardError = true,
                     StandardErrorEncoding = Encoding.UTF8,
                 };
+                AllocConsole();
+                SetConsoleOutputCP(CP_UTF8);
                 process = Process.Start(info);
+                FreeConsole();
                 if (process == null) { throw new Exception(); }
                 process.PriorityClass = ProcessPriorityClass.BelowNormal;
                 process.Exited += (_, _) =>
                 {
                     notExpected = true;
-                    Stop();
+                    try
+                    {
+                        stopEvent.Set();
+                    }
+                    catch { }
                 };
                 process.EnableRaisingEvents = true;
-                process.StandardOutput.BaseStream.CopyToAsync(pipeClientStream);
-                process.StandardError.BaseStream.CopyToAsync(pipeClientStream);
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        process.StandardOutput.BaseStream.CopyTo(pipeClientStream);
+                    }
+                    catch { }
+                    finally
+                    {
+                        stopEvent.Set();
+                    }
+                });
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        process.StandardError.BaseStream.CopyTo(pipeClientStream);
+                    }
+                    catch { }
+                    finally
+                    {
+                        stopEvent.Set();
+                    }
+                });
             }
             catch (Exception e)
             {
@@ -73,7 +112,7 @@ namespace ClashSvcHost
                     byte[] b = Encoding.UTF8.GetBytes(e.Message + "\n");
                     pipeClientStream!.Write(b);
                 }
-                catch (Exception) { }
+                catch { }
                 Stop();
                 return;
             }
@@ -83,23 +122,23 @@ namespace ClashSvcHost
         {
             try
             {
-                using Mutex mutex = new(false, "Global\\ClashServiceClient");
+                using Mutex mutex = Mutex.OpenExisting("Global\\ClashServiceClient");
                 mutex.WaitOne();
             }
-            catch (Exception) { }
+            catch { }
             finally
             {
-                Stop();
+                stopEvent.Set();
             }
         }
 
         private void StopProcess()
         {
             process!.EnableRaisingEvents = false;
-            ConsoleApis.AttachConsole(process!.Id);
-            ConsoleApis.SetConsoleCtrlHandler(null, true);
-            ConsoleApis.GenerateConsoleCtrlEvent(ConsoleApis.CtrlEvents.CTRL_C_EVENT, 0);
-            ConsoleApis.FreeConsole();
+            AttachConsole(process!.Id);
+            SetConsoleCtrlHandler(null, true);
+            GenerateConsoleCtrlEvent(CtrlEvents.CTRL_C_EVENT, 0);
+            FreeConsole();
             bool res = process!.WaitForExit(5000);
             if (!res)
             {
@@ -109,6 +148,7 @@ namespace ClashSvcHost
 
         private void DoStop()
         {
+            stopTriggered = true;
             if (process != null)
             {
                 if (!process.HasExited)
@@ -122,7 +162,7 @@ namespace ClashSvcHost
                         byte[] b = Encoding.UTF8.GetBytes($"Clash process existed unexpectedly, exit code: {process.ExitCode}\n");
                         pipeClientStream!.Write(b);
                     }
-                    catch (Exception) { }
+                    catch { }
                 }
                 process.Close();
                 process.Dispose();
@@ -136,7 +176,7 @@ namespace ClashSvcHost
                         pipeClientStream.Flush();
                         pipeClientStream.WaitForPipeDrain();
                     }
-                    catch (Exception) { }
+                    catch { }
                 }
                 pipeClientStream.Close();
                 pipeClientStream.Dispose();

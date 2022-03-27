@@ -1,10 +1,13 @@
 ﻿using System.ComponentModel;
 using System.IO.Pipes;
+using System.Security.AccessControl;
 using System.ServiceProcess;
 using WinSW.Native;
+using static WinSW.Native.ConsoleApis;
+
 namespace ClashSvcClient
 {
-    internal class ControllerService
+    internal sealed class ControllerService
     {
         private readonly ServiceController svc;
         private readonly NamedPipeServerStream pipeServerStream;
@@ -15,18 +18,17 @@ namespace ClashSvcClient
         public ControllerService()
         {
             svc = new(Constant.serviceName);
-            pipeName = "LOCAL\\{" + Guid.NewGuid().ToString() + "}";
-            pipeServerStream = new(pipeName, PipeDirection.In, 1, PipeTransmissionMode.Message, PipeOptions.WriteThrough);
+            pipeName = Guid.NewGuid().ToString();
+            pipeServerStream = new(pipeName, PipeDirection.In, 1, PipeTransmissionMode.Message, PipeOptions.WriteThrough | PipeOptions.Asynchronous);
             stopEvent = new();
             isExpected = false;
-            ConsoleApis.SetConsoleOutputCP(ConsoleApis.CP_UTF8);
+            SetConsoleOutputCP(CP_UTF8);
         }
 
         public void Run(string[] args)
         {
-            ConsoleApis.SetConsoleCtrlHandler(ConsoleCtrlHandler, true);
-            Task pipeRecvTask = new(StartPipeServer);
-            pipeRecvTask.Start();
+            SetConsoleCtrlHandler(ConsoleCtrlHandler, true);
+            Task.Run(StartPipeServer);
             string[] svcargs = new string[args.Length + 1];
             svcargs[0] = pipeName;
             for (int i = 0; i < args.Length; i++)
@@ -34,12 +36,11 @@ namespace ClashSvcClient
                 svcargs[i + 1] = args[i];
             }
             StartService(svcargs);
-            Task checkHealthTask = new(CheckHealth);
-            checkHealthTask.Start();
+            Task.Run(CheckHealth);
             stopEvent.Wait();
             if (!isExpected)
             {
-                Console.WriteLine("Service stopped unexpectedly, existing...");
+                Console.WriteLine("WARNING: Service stopped unexpectedly, existing...");
             }
             if (svc.Status == ServiceControllerStatus.Running)
             {
@@ -49,10 +50,9 @@ namespace ClashSvcClient
             {
                 StopPipeServer();
             }
-            stopEvent.Dispose();
         }
 
-        private bool ConsoleCtrlHandler(ConsoleApis.CtrlEvents _)
+        private bool ConsoleCtrlHandler(CtrlEvents _)
         {
             isExpected = true;
             stopEvent.Set();
@@ -63,10 +63,10 @@ namespace ClashSvcClient
         {
             try
             {
-                using Mutex mutex = new(false, "Global\\ClashServiceHost");
+                using Mutex mutex = MutexAcl.OpenExisting("Global\\ClashServiceHost", MutexRights.Delete | MutexRights.Modify | MutexRights.Synchronize | MutexRights.TakeOwnership);
                 mutex.WaitOne();
             }
-            catch (Exception) { }
+            catch { }
             finally
             {
                 stopEvent.Set();
@@ -80,7 +80,7 @@ namespace ClashSvcClient
             {
                 pipeServerStream.CopyTo(Console.OpenStandardOutput());
             }
-            catch (Exception) { }
+            catch { }
             finally
             {
                 stopEvent.Set();
@@ -96,7 +96,7 @@ namespace ClashSvcClient
                     pipeServerStream.Disconnect();
                 }
             }
-            catch (Exception) { }
+            catch { }
             finally
             {
                 pipeServerStream.Close();
@@ -136,7 +136,11 @@ namespace ClashSvcClient
                     svc.WaitForStatus(ServiceControllerStatus.Stopped);
                 }
             }
-            catch (Exception) { }
+            catch (InvalidOperationException e)
+            when (e.InnerException is Win32Exception inner)
+            {
+                Throw.Command.Exception(inner);
+            }
             finally
             {
                 svc.Close();

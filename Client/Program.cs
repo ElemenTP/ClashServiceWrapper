@@ -10,7 +10,7 @@
             if (!isFirstInstance)
             {
                 Console.WriteLine("The application already has one instance running.");
-                Environment.Exit(0);
+                Environment.Exit(-1);
             }
             {
                 try
@@ -21,10 +21,10 @@
                         throw new Exception();
                     }
                 }
-                catch (Exception)
+                catch
                 {
-                    Console.WriteLine("The service is running!");
-                    Environment.Exit(0);
+                    Console.WriteLine("ERROR: The service is running!");
+                    Environment.Exit(-2);
                 }
             }
             try
@@ -34,7 +34,8 @@
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("ERROR: " + e.Message);
+                Environment.Exit(-3);
             }
         }
     }

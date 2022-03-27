@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Security.AccessControl;
 using System.Security.Principal;
 using System.ServiceProcess;
 using WinSW;
@@ -25,6 +26,9 @@ namespace ClashSvcHost
                 WindowsPrincipal principal = new(identity);
                 if (principal.IsInRole(new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null)))
                 {
+                    MutexSecurity mSec = mutex.GetAccessControl();
+                    mSec.SetAccessRule(new MutexAccessRule(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null), MutexRights.Delete | MutexRights.Modify | MutexRights.Synchronize | MutexRights.TakeOwnership, AccessControlType.Allow));
+                    mutex.SetAccessControl(mSec);
                     using WrapperService svc = new();
                     ServiceBase.Run(svc);
                 }
@@ -70,6 +74,7 @@ namespace ClashSvcHost
             if (scm.ServiceExists(Constant.serviceName))
             {
                 Console.WriteLine($"ERROR: A service with ID '{Constant.serviceName}' already exists.");
+                Environment.Exit(-1);
             }
             try
             {
@@ -86,15 +91,7 @@ namespace ClashSvcHost
             }
             catch (CommandException e) when (e.InnerException is Win32Exception inner)
             {
-                switch (inner.NativeErrorCode)
-                {
-                    case Errors.ERROR_SERVICE_EXISTS:
-                        Console.WriteLine($"ERROR: A service with ID '{Constant.serviceName}' already exists.");
-                        break;
-                    default:
-                        Throw.Command.Exception("ERROR: Failed to install the service.", inner);
-                        break;
-                }
+                Throw.Command.Exception("ERROR: Failed to install the service.", inner);
             }
         }
 
@@ -104,6 +101,7 @@ namespace ClashSvcHost
             if (!scm.ServiceExists(Constant.serviceName))
             {
                 Console.WriteLine($"ERROR: Service '{Constant.serviceName}' does not exist.");
+                Environment.Exit(-1);
             }
             try
             {
@@ -115,20 +113,7 @@ namespace ClashSvcHost
             }
             catch (CommandException e) when (e.InnerException is Win32Exception inner)
             {
-                switch (inner.NativeErrorCode)
-                {
-                    case Errors.ERROR_SERVICE_DOES_NOT_EXIST:
-                        Console.WriteLine($"ERROR: Service '{Constant.serviceName}' does not exist.");
-                        break;
-
-                    case Errors.ERROR_SERVICE_MARKED_FOR_DELETE:
-                        Console.WriteLine($"ERROR: {e.Message}");
-                        break;
-
-                    default:
-                        Throw.Command.Exception("ERROR: Failed to uninstall the service.", inner);
-                        break;
-                }
+                Throw.Command.Exception("ERROR: Failed to uninstall the service.", inner);
             }
         }
     }

@@ -7,7 +7,7 @@
 		<Nullable>enable</Nullable>
 		<StartupObject>ClashSvcHost.Program</StartupObject>
 		<PlatformTarget>x64</PlatformTarget>
-		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+		<AllowUnsafeBlocks>False</AllowUnsafeBlocks>
 		<RootNamespace>ClashSvcHost</RootNamespace>
 		<AssemblyName>ClashSvcHost</AssemblyName>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
@@ -27,5 +27,6 @@
 	
 	<ItemGroup>
 		<PackageReference Include="Microsoft.DotNet.ILCompiler" Version="7.0.0-*" />
+		<PackageReference Include="System.Threading.AccessControl" Version="6.0.0" />
 	</ItemGroup>
 </Project>
