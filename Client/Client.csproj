@@ -17,6 +17,8 @@
 	</ItemGroup>
 
 	<PropertyGroup>
+		<DebuggerSupport>false</DebuggerSupport>
+		<IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
 		<IlcOptimizationPreference>speed</IlcOptimizationPreference>
 		<IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
 		<TrimMode>link</TrimMode>
