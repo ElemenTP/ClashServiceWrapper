@@ -7,15 +7,13 @@ namespace WinSW.Native
 {
     internal static class ServiceApis
     {
-        private const string Advapi32 = "advapi32.dll";
-
-        [DllImport(Advapi32, SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "ChangeServiceConfig2W")]
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "ChangeServiceConfig2W")]
         internal static extern bool ChangeServiceConfig2(IntPtr serviceHandle, ServiceConfigInfoLevels infoLevel, in SERVICE_DESCRIPTION info);
 
-        [DllImport(Advapi32)]
+        [DllImport("advapi32.dll")]
         internal static extern bool CloseServiceHandle(IntPtr objectHandle);
 
-        [DllImport(Advapi32, SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "CreateServiceW")]
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "CreateServiceW")]
         internal static extern IntPtr CreateService(
             IntPtr databaseHandle,
             string serviceName,
@@ -31,19 +29,19 @@ namespace WinSW.Native
             string? serviceStartName,
             string? password);
 
-        [DllImport(Advapi32, SetLastError = true)]
+        [DllImport("advapi32.dll", SetLastError = true)]
         internal static extern bool DeleteService(IntPtr serviceHandle);
 
-        [DllImport(Advapi32, SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "OpenSCManagerW")]
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "OpenSCManagerW")]
         internal static extern IntPtr OpenSCManager(string? machineName, string? databaseName, ServiceManagerAccess desiredAccess);
 
-        [DllImport(Advapi32, SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "OpenServiceW")]
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "OpenServiceW")]
         internal static extern IntPtr OpenService(IntPtr databaseHandle, string serviceName, ServiceAccess desiredAccess);
 
-        [DllImport(Advapi32, SetLastError = true)]
+        [DllImport("advapi32.dll", SetLastError = true)]
         internal static extern bool QueryServiceObjectSecurity(IntPtr serviceHandle, SecurityInfos secInfo, byte[] lpSecDesrBuf, uint bufSize, out uint bufSizeNeeded);
 
-        [DllImport(Advapi32, SetLastError = true)]
+        [DllImport("advapi32.dll", SetLastError = true)]
         internal static extern bool SetServiceObjectSecurity(IntPtr serviceHandle, SecurityInfos securityInformation, byte[] securityDescriptor);
 
         // SERVICE_

@@ -4,26 +4,24 @@ namespace WinSW.Native
 {
     internal static class ConsoleApis
     {
-        private const string Kernel32 = "kernel32.dll";
-
         internal const uint CP_UTF8 = 65001;
 
-        [DllImport(Kernel32, SetLastError = true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         internal static extern bool AllocConsole();
 
-        [DllImport(Kernel32, SetLastError = true)]
+        [DllImport("kernel32.dll", SetLastError = true)]
         internal static extern bool AttachConsole(int processId);
 
-        [DllImport(Kernel32)]
+        [DllImport("kernel32.dll")]
         internal static extern bool FreeConsole();
 
-        [DllImport(Kernel32)]
+        [DllImport("kernel32.dll")]
         internal static extern bool GenerateConsoleCtrlEvent(CtrlEvents ctrlEvent, uint processGroupId);
 
-        [DllImport(Kernel32)]
+        [DllImport("kernel32.dll")]
         internal static extern bool SetConsoleCtrlHandler(ConsoleCtrlHandlerRoutine? handlerRoutine, bool add);
 
-        [DllImport(Kernel32)]
+        [DllImport("kernel32.dll")]
         internal static extern bool SetConsoleOutputCP(uint codePageID);
 
         internal delegate bool ConsoleCtrlHandlerRoutine(CtrlEvents ctrlType);

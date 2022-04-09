@@ -5,7 +5,7 @@
         internal static bool isFirstInstance = true;
         internal static Mutex mutex = new(true, "Global\\ClashServiceClient", out isFirstInstance);
 
-        internal static void Main(string[] args)
+        internal static void Main()
         {
             if (!isFirstInstance)
             {
@@ -30,7 +30,7 @@
             try
             {
                 ControllerService cs = new();
-                cs.Run(args);
+                cs.Run();
             }
             catch (Exception e)
             {

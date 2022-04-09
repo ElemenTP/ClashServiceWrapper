@@ -26,7 +26,7 @@ namespace ClashSvcHost
 
         protected override void OnStart(string[] args)
         {
-            if (args.Length == 0)
+            if (args.Length != 2)
             {
                 Stop();
                 return;
@@ -55,7 +55,7 @@ namespace ClashSvcHost
                 ProcessStartInfo info = new()
                 {
                     FileName = "\"" + Constant.exeDir + Constant.clashName + "\"",
-                    Arguments = "\"" + string.Join("\" \"", args[1..]) + "\"",
+                    Arguments = args[1],
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     ErrorDialog = true,

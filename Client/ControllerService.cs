@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.IO.Pipes;
+using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.ServiceProcess;
 using WinSW.Native;
@@ -25,15 +26,35 @@ namespace ClashSvcClient
             SetConsoleOutputCP(CP_UTF8);
         }
 
-        public void Run(string[] args)
+        public void Run()
         {
             SetConsoleCtrlHandler(ConsoleCtrlHandler, true);
             Task.Run(StartPipeServer);
-            string[] svcargs = new string[args.Length + 1];
+            string[] svcargs = new string[2];
             svcargs[0] = pipeName;
-            for (int i = 0; i < args.Length; i++)
             {
-                svcargs[i + 1] = args[i];
+                string cmdline = Marshal.PtrToStringUni(GetCommandLineW())!;
+                bool notQuoted = true;
+                for (int i = 0; i < cmdline.Length; i++)
+                {
+                    switch (cmdline[i])
+                    {
+                        case '"':
+                            notQuoted = !notQuoted;
+                            break;
+                        case ' ':
+                            if (notQuoted && i < cmdline.Length - 1)
+                            {
+                                svcargs[1] = cmdline[(i + 1)..];
+                                i = cmdline.Length;
+                            }
+                            break;
+                    }
+                }
+                if (svcargs[1] == null)
+                {
+                    svcargs[1] = "-d \"" + Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\.config\\clash\"";
+                }
             }
             StartService(svcargs);
             Task.Run(CheckHealth);
