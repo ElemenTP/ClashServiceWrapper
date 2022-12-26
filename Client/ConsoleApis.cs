@@ -2,18 +2,20 @@
 
 namespace WinSW.Native
 {
-    internal static class ConsoleApis
+    internal static partial class ConsoleApis
     {
         internal const uint CP_UTF8 = 65001;
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-        internal static extern IntPtr GetCommandLineW();
+        [LibraryImport("kernel32.dll")]
+        internal static partial IntPtr GetCommandLineW();
 
-        [DllImport("kernel32.dll")]
-        internal static extern bool SetConsoleCtrlHandler(ConsoleCtrlHandlerRoutine? handlerRoutine, bool add);
+        [LibraryImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool SetConsoleCtrlHandler(ConsoleCtrlHandlerRoutine? handlerRoutine, [MarshalAs(UnmanagedType.Bool)] bool add);
 
-        [DllImport("kernel32.dll")]
-        internal static extern bool SetConsoleOutputCP(uint codePageID);
+        [LibraryImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool SetConsoleOutputCP(uint codePageID);
 
         internal delegate bool ConsoleCtrlHandlerRoutine(CtrlEvents ctrlType);
 

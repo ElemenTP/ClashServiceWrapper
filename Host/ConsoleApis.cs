@@ -2,27 +2,33 @@
 
 namespace WinSW.Native
 {
-    internal static class ConsoleApis
+    internal static partial class ConsoleApis
     {
         internal const uint CP_UTF8 = 65001;
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        internal static extern bool AllocConsole();
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool AllocConsole();
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        internal static extern bool AttachConsole(int processId);
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool AttachConsole(int processId);
 
-        [DllImport("kernel32.dll")]
-        internal static extern bool FreeConsole();
+        [LibraryImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool FreeConsole();
 
-        [DllImport("kernel32.dll")]
-        internal static extern bool GenerateConsoleCtrlEvent(CtrlEvents ctrlEvent, uint processGroupId);
+        [LibraryImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool GenerateConsoleCtrlEvent(CtrlEvents ctrlEvent, uint processGroupId);
 
-        [DllImport("kernel32.dll")]
-        internal static extern bool SetConsoleCtrlHandler(ConsoleCtrlHandlerRoutine? handlerRoutine, bool add);
+        [LibraryImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool SetConsoleCtrlHandler(ConsoleCtrlHandlerRoutine? handlerRoutine, [MarshalAs(UnmanagedType.Bool)] bool add);
 
-        [DllImport("kernel32.dll")]
-        internal static extern bool SetConsoleOutputCP(uint codePageID);
+        [LibraryImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool SetConsoleOutputCP(uint codePageID);
 
         internal delegate bool ConsoleCtrlHandlerRoutine(CtrlEvents ctrlType);
 

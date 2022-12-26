@@ -107,13 +107,17 @@ namespace WinSW.Native
         /// <exception cref="CommandException" />
         internal void SetDescription(string description)
         {
+            SERVICE_DESCRIPTION sERVICE_DESCRIPTION;
+            IntPtr lpDescription = Marshal.StringToHGlobalUni(description);
+            sERVICE_DESCRIPTION.lpDescription = lpDescription;
             if (!ChangeServiceConfig2(
-                this.handle,
+                handle,
                 ServiceConfigInfoLevels.DESCRIPTION,
-                new SERVICE_DESCRIPTION { Description = description }))
+                ref sERVICE_DESCRIPTION))
             {
                 Throw.Command.Win32Exception("Failed to configure the description.");
             }
+            Marshal.FreeHGlobal(lpDescription);
         }
 
         /// <exception cref="CommandException" />

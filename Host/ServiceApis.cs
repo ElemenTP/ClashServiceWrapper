@@ -1,20 +1,21 @@
 ﻿using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.ServiceProcess;
-using System.Text;
 
 namespace WinSW.Native
 {
-    internal static class ServiceApis
+    internal static partial class ServiceApis
     {
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "ChangeServiceConfig2W")]
-        internal static extern bool ChangeServiceConfig2(IntPtr serviceHandle, ServiceConfigInfoLevels infoLevel, in SERVICE_DESCRIPTION info);
+        [LibraryImport("advapi32.dll", EntryPoint = "ChangeServiceConfig2W", StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool ChangeServiceConfig2(IntPtr serviceHandle, ServiceConfigInfoLevels infoLevel, ref SERVICE_DESCRIPTION info);
 
-        [DllImport("advapi32.dll")]
-        internal static extern bool CloseServiceHandle(IntPtr objectHandle);
+        [LibraryImport("advapi32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool CloseServiceHandle(IntPtr objectHandle);
 
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "CreateServiceW")]
-        internal static extern IntPtr CreateService(
+        [LibraryImport("advapi32.dll", EntryPoint = "CreateServiceW", StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
+        internal static partial IntPtr CreateService(
             IntPtr databaseHandle,
             string serviceName,
             string displayName,
@@ -25,24 +26,27 @@ namespace WinSW.Native
             string binaryPath,
             string? loadOrderGroup,
             IntPtr tagId,
-            StringBuilder? dependencies, // TODO
+            string? dependencies,
             string? serviceStartName,
             string? password);
 
-        [DllImport("advapi32.dll", SetLastError = true)]
-        internal static extern bool DeleteService(IntPtr serviceHandle);
+        [LibraryImport("advapi32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool DeleteService(IntPtr serviceHandle);
 
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "OpenSCManagerW")]
-        internal static extern IntPtr OpenSCManager(string? machineName, string? databaseName, ServiceManagerAccess desiredAccess);
+        [LibraryImport("advapi32.dll", EntryPoint = "OpenSCManagerW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+        internal static partial IntPtr OpenSCManager(string? machineName, string? databaseName, ServiceManagerAccess desiredAccess);
 
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "OpenServiceW")]
-        internal static extern IntPtr OpenService(IntPtr databaseHandle, string serviceName, ServiceAccess desiredAccess);
+        [LibraryImport("advapi32.dll", EntryPoint = "OpenServiceW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+        internal static partial IntPtr OpenService(IntPtr databaseHandle, string serviceName, ServiceAccess desiredAccess);
 
-        [DllImport("advapi32.dll", SetLastError = true)]
-        internal static extern bool QueryServiceObjectSecurity(IntPtr serviceHandle, SecurityInfos secInfo, byte[] lpSecDesrBuf, uint bufSize, out uint bufSizeNeeded);
+        [LibraryImport("advapi32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool QueryServiceObjectSecurity(IntPtr serviceHandle, SecurityInfos secInfo, byte[] lpSecDesrBuf, uint bufSize, out uint bufSizeNeeded);
 
-        [DllImport("advapi32.dll", SetLastError = true)]
-        internal static extern bool SetServiceObjectSecurity(IntPtr serviceHandle, SecurityInfos securityInformation, byte[] securityDescriptor);
+        [LibraryImport("advapi32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool SetServiceObjectSecurity(IntPtr serviceHandle, SecurityInfos securityInformation, byte[] securityDescriptor);
 
         // SERVICE_
         // https://docs.microsoft.com/windows/win32/services/service-security-and-access-rights
@@ -118,10 +122,10 @@ namespace WinSW.Native
                 ModifyBootConfig,
         }
 
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        [StructLayout(LayoutKind.Sequential)]
         internal struct SERVICE_DESCRIPTION
         {
-            public string Description;
+            public IntPtr lpDescription;
         }
     }
 }

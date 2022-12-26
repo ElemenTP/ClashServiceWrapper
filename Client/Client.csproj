@@ -2,21 +2,22 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net6.0-windows</TargetFramework>
+		<TargetFramework>net7.0-windows</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<StartupObject>ClashSvcClient.Program</StartupObject>
 		<PlatformTarget>x64</PlatformTarget>
-		<AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<RootNamespace>ClashSvcClient</RootNamespace>
 		<AssemblyName>ClashSvcClient</AssemblyName>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="System.ServiceProcess.ServiceController" Version="6.0.0" />
+		<PackageReference Include="System.ServiceProcess.ServiceController" Version="7.0.0" />
 	</ItemGroup>
 
 	<PropertyGroup>
+		<PublishAot>true</PublishAot>
 		<DebuggerSupport>false</DebuggerSupport>
 		<IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
 		<IlcOptimizationPreference>speed</IlcOptimizationPreference>
@@ -28,6 +29,6 @@
 	
 	<ItemGroup>
 		<PackageReference Include="Microsoft.DotNet.ILCompiler" Version="7.0.0-*" />
-		<PackageReference Include="System.Threading.AccessControl" Version="6.0.0" />
+		<PackageReference Include="System.Threading.AccessControl" Version="7.0.0" />
 	</ItemGroup>
 </Project>
