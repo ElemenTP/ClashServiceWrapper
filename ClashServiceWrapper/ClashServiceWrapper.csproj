@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net7.0-windows</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<StartupObject>ClashServiceWrapper.Program</StartupObject>
+		<PlatformTarget>AnyCPU</PlatformTarget>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<RootNamespace>ClashServiceWrapper</RootNamespace>
+		<AssemblyName>ClashServiceWrapper</AssemblyName>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<PublishAot>true</PublishAot>
+		<DebuggerSupport>false</DebuggerSupport>
+		<IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
+		<IlcOptimizationPreference>speed</IlcOptimizationPreference>
+		<IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+		<TrimMode>link</TrimMode>
+		<InvariantGlobalization>true</InvariantGlobalization>
+		<IlcTrimMetadata>true</IlcTrimMetadata>
+		<AssemblyVersion>2.0.0.0</AssemblyVersion>
+		<FileVersion>2.0.0.0</FileVersion>
+	</PropertyGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+		<PackageReference Include="System.ServiceProcess.ServiceController" Version="7.0.0" />
+		<PackageReference Include="System.Threading.AccessControl" Version="7.0.0" />
+	</ItemGroup>
+</Project>

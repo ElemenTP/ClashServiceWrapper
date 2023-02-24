@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Host", "Host\Host.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Client", "Client\Client.csproj", "{CE018684-A377-4E3B-8BCF-BB4F5F488C8B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClashServiceWrapper", "ClashServiceWrapper\ClashServiceWrapper.csproj", "{03F03561-11DE-49C8-A9CE-3CFEADCB30DB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{CE018684-A377-4E3B-8BCF-BB4F5F488C8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CE018684-A377-4E3B-8BCF-BB4F5F488C8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CE018684-A377-4E3B-8BCF-BB4F5F488C8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03F03561-11DE-49C8-A9CE-3CFEADCB30DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03F03561-11DE-49C8-A9CE-3CFEADCB30DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03F03561-11DE-49C8-A9CE-3CFEADCB30DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03F03561-11DE-49C8-A9CE-3CFEADCB30DB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
