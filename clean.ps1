@@ -1,30 +1,16 @@
-if($args.Count -eq 0)
+param (
+    [string]$Target = "ClashServiceWrapper",
+    [string]$Runtime = "win-x64"
+)
+$target = "$PSScriptRoot\$Target\$Target.csproj"
+if (Test-Path -Path $target)
 {
-    $target=$PSScriptRoot+"\ClashServiceWrapper.sln"
-}
-elseif ($args.Count -eq 1)
-{
-    if($args[0] -eq "all")
+    $optdir="$PSScriptRoot\publish"
+    if (Test-Path -Path $optdir)
     {
-        $target=$PSScriptRoot+"\ClashServiceWrapper.sln"
+        Remove-Item ($optdir+"\*")
     }
-    elseif($args[0] -eq "host")
-    {
-        $target=$PSScriptRoot+"\Host\Host.csproj"
-    }
-    elseif($args[0] -eq "client")
-    {
-        $target=$PSScriptRoot+"\Client\Client.csproj"
-    }
-}
-if (Test-Path variable:target)
-{
-    $publish=$PSScriptRoot+"\publish"
-    if (Test-Path $publish)
-    {
-        rm ($publish+"\*")
-    }
-    dotnet clean -r win-x64 -c Release $target
+    dotnet clean -r $Runtime -c Release $target
 }
 else
 {
