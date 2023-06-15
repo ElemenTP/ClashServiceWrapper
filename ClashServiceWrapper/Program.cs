@@ -1,5 +1,7 @@
 ﻿using System.CommandLine;
+using System.ServiceProcess;
 using System.Text;
+using static ClashServiceWrapper.ServiceApis;
 
 namespace ClashServiceWrapper
 {
@@ -44,10 +46,10 @@ namespace ClashServiceWrapper
             var serviceCommand = new Command("service", description: "Entry for service");
             serviceCommand.SetHandler(Service);
             rootCommand.AddCommand(serviceCommand);
-            var installCommand = new Command("install", description: "Install clash service and add firewall rules");
+            var installCommand = new Command("install", description: "Install clash service");
             installCommand.SetHandler(Install);
             rootCommand.AddCommand(installCommand);
-            var uninstallCommand = new Command("uninstall", description: "Uninstall clash service and delete firewall rules");
+            var uninstallCommand = new Command("uninstall", description: "Uninstall clash service");
             uninstallCommand.SetHandler(Uninstall);
             rootCommand.AddCommand(uninstallCommand);
 
@@ -107,8 +109,30 @@ namespace ClashServiceWrapper
             {
                 PasteArguments.AppendArgument(argsbuilder, "-v");
             }
-            var cc = new ClientController();
-            cc.StartService(argsbuilder.ToString(), mon);
+            try
+            {
+                var cc = new ClientController();
+                var status = cc.QueryService();
+                if (status! == ServiceControllerStatus.Running)
+                {
+                    Console.WriteLine($"INFO: Service '{Constant.serviceName}' is already running.");
+                    return 0;
+                }
+                if (mon)
+                {
+                    cc.StartService(argsbuilder.ToString());
+                }
+                else
+                {
+                    cc.StartServiceNoMon(argsbuilder.ToString());
+                    Console.WriteLine($"INFO: Service '{Constant.serviceName}' started successfully.");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"ERROR: Failed to start the service. ({e.Message})");
+                return -3;
+            }
             return 0;
         }
 
@@ -124,8 +148,23 @@ namespace ClashServiceWrapper
                 Console.WriteLine("The client already has one instance running.");
                 return Task.FromResult(-1);
             }
-            var cc = new ClientController();
-            cc.StopService();
+            try
+            {
+                var cc = new ClientController();
+                var status = cc.QueryService();
+                if (status! == ServiceControllerStatus.Stopped)
+                {
+                    Console.WriteLine($"INFO: Service '{Constant.serviceName}' is already stopped.");
+                    return Task.FromResult(0);
+                }
+                cc.StopService();
+                Console.WriteLine($"INFO: Service '{Constant.serviceName}' stopped successfully.");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"ERROR: Failed to stop the service. ({e.Message})");
+                return Task.FromResult(-3);
+            }
             return Task.FromResult(0);
         }
 
@@ -141,32 +180,100 @@ namespace ClashServiceWrapper
                 Console.WriteLine("The client already has one instance running.");
                 return Task.FromResult(-1);
             }
-            var cc = new ClientController();
-            var status = cc.QueryService();
-            if (status != null)
+            try
             {
-                Console.WriteLine($"{status}");
+                var cc = new ClientController();
+                var status = cc.QueryService();
+                if (status != null)
+                {
+                    Console.WriteLine($"Status: {status}");
+                }
             }
-            else
+            catch (Exception e)
             {
-                Console.WriteLine();
-                return Task.FromResult(-5);
+                Console.WriteLine($"ERROR: Failed to query service status. ({e.Message})");
+                return Task.FromResult(-3);
             }
             return Task.FromResult(0);
         }
 
         internal static Task<int> Service()
         {
+            if (!Util.IsLocalSystem())
+            {
+                Console.WriteLine("This is the entry for the windows service, do not run directly.");
+                return Task.FromResult(-2);
+            }
+            if (!SingleInstance.HostGetIsFirstInstance())
+            {
+                return Task.FromResult(-1);
+            }
+            SingleInstance.HostSetACL();
+            using WrapperService svc = new();
+            ServiceBase.Run(svc);
             return Task.FromResult(0);
         }
 
         internal static Task<int> Install()
         {
+            if (!Util.IsAdministrator())
+            {
+                Console.WriteLine("This command can only be run in Administrator privilege.");
+                return Task.FromResult(-2);
+            }
+            using var scm = ServiceManager.Open(ServiceManagerAccess.CreateService);
+            if (scm.ServiceExists(Constant.serviceName))
+            {
+                Console.WriteLine($"ERROR: A service with ID '{Constant.serviceName}' already exists.");
+                return Task.FromResult(-1);
+            }
+            try
+            {
+                using Service svc = scm.CreateService(
+                    Constant.serviceName,
+                    Constant.serviceName,
+                    ServiceStartMode.Manual,
+                    "\"" + Environment.ProcessPath! + "\" service"
+                    );
+
+                svc.SetDescription(Constant.serviceDes);
+                svc.SetSecurityDescriptor();
+                Console.WriteLine($"INFO: Service '{Constant.serviceName}' installed successfully.");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"ERROR: Failed to install the service. ({e.Message})");
+                return Task.FromResult(-3);
+            }
             return Task.FromResult(0);
         }
 
         internal static Task<int> Uninstall()
         {
+            if (!Util.IsAdministrator())
+            {
+                Console.WriteLine("This command can only be run in Administrator privilege.");
+                return Task.FromResult(-2);
+            }
+            using var scm = ServiceManager.Open(ServiceManagerAccess.Connect);
+            if (!scm.ServiceExists(Constant.serviceName))
+            {
+                Console.WriteLine($"ERROR: Service '{Constant.serviceName}' does not exist.");
+                Environment.Exit(-1);
+            }
+            try
+            {
+                using var svc = scm.OpenService(Constant.serviceName);
+
+                svc.Delete();
+
+                Console.WriteLine($"INFO: Service '{Constant.serviceName}' was uninstalled successfully.");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"ERROR: Failed to uninstall the service. ({e.Message})");
+                return Task.FromResult(-3);
+            }
             return Task.FromResult(0);
         }
     }

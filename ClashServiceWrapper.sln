@@ -3,11 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32228.430
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Host", "Host\Host.csproj", "{61E65FB4-7645-430A-90BD-054BEAB96864}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Client", "Client\Client.csproj", "{CE018684-A377-4E3B-8BCF-BB4F5F488C8B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClashServiceWrapper", "ClashServiceWrapper\ClashServiceWrapper.csproj", "{03F03561-11DE-49C8-A9CE-3CFEADCB30DB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClashServiceWrapper", "ClashServiceWrapper\ClashServiceWrapper.csproj", "{03F03561-11DE-49C8-A9CE-3CFEADCB30DB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,14 +11,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{61E65FB4-7645-430A-90BD-054BEAB96864}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{61E65FB4-7645-430A-90BD-054BEAB96864}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{61E65FB4-7645-430A-90BD-054BEAB96864}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{61E65FB4-7645-430A-90BD-054BEAB96864}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CE018684-A377-4E3B-8BCF-BB4F5F488C8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CE018684-A377-4E3B-8BCF-BB4F5F488C8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CE018684-A377-4E3B-8BCF-BB4F5F488C8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CE018684-A377-4E3B-8BCF-BB4F5F488C8B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{03F03561-11DE-49C8-A9CE-3CFEADCB30DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{03F03561-11DE-49C8-A9CE-3CFEADCB30DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{03F03561-11DE-49C8-A9CE-3CFEADCB30DB}.Release|Any CPU.ActiveCfg = Release|Any CPU

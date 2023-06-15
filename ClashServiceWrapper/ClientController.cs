@@ -7,56 +7,55 @@ namespace ClashServiceWrapper
     internal sealed class ClientController
     {
         private readonly ServiceController svc;
-        private readonly NamedPipeServerStream pipeServerStream;
-        private readonly ManualResetEventSlim stopEvent;
-        private readonly string pipeName;
-        private volatile bool isExpected;
+        private NamedPipeServerStream? pipeServerStream;
+        private ManualResetEventSlim? stopEvent;
+        private bool isExpected;
 
         public ClientController()
         {
             svc = new(Constant.serviceName);
-            pipeName = Guid.NewGuid().ToString();
-            pipeServerStream = new(pipeName, PipeDirection.In, 1, PipeTransmissionMode.Message, PipeOptions.WriteThrough | PipeOptions.Asynchronous);
-            stopEvent = new();
             isExpected = false;
             ConsoleApis.SetConsoleOutputCP(ConsoleApis.CP_UTF8);
         }
 
-        public void StartService(string args, bool mon)
+        public void StartService(string args)
         {
             ConsoleApis.SetConsoleCtrlHandler(ConsoleCtrlHandler, true);
-            if (mon)
-            {
-                Task.Run(StartPipeServer);
-            }
-            string[] svcargs = new string[3];
-            svcargs[0] = pipeName;
-            svcargs[1] = args;
-            svcargs[2] = mon ? "true" : "false";
+            string pipeName = Guid.NewGuid().ToString();
+            pipeServerStream = new(pipeName, PipeDirection.In, 1, PipeTransmissionMode.Message, PipeOptions.WriteThrough | PipeOptions.Asynchronous);
+            stopEvent = new();
+            Task.Run(StartPipeServer);
+            string[] svcargs = new string[2];
+            svcargs[0] = args;
+            svcargs[1] = pipeName;
             StartServiceInner(svcargs);
-            if (mon)
+            Task.Run(CheckHealth);
+            stopEvent.Wait();
+            if (!isExpected)
             {
-                Task.Run(CheckHealth);
-                stopEvent.Wait();
-                if (!isExpected)
-                {
-                    Console.WriteLine("WARNING: Service stopped unexpectedly, existing...");
-                }
-                if (svc.Status == ServiceControllerStatus.Running)
-                {
-                    StopService();
-                }
-                if (pipeServerStream.IsConnected == true)
-                {
-                    StopPipeServer();
-                }
+                Console.WriteLine("WARNING: Service stopped unexpectedly, existing...");
             }
+            if (svc.Status == ServiceControllerStatus.Running)
+            {
+                StopService();
+            }
+            if (pipeServerStream.IsConnected == true)
+            {
+                StopPipeServer();
+            }
+        }
+
+        public void StartServiceNoMon(string args)
+        {
+            string[] svcargs = new string[1];
+            svcargs[0] = args;
+            StartServiceInner(svcargs);
         }
 
         private bool ConsoleCtrlHandler(ConsoleApis.CtrlEvents _)
         {
             isExpected = true;
-            stopEvent.Set();
+            stopEvent!.Set();
             return true;
         }
 
@@ -68,20 +67,20 @@ namespace ClashServiceWrapper
             }
             finally
             {
-                stopEvent.Set();
+                stopEvent!.Set();
             }
         }
 
         private void StartPipeServer()
         {
-            pipeServerStream.WaitForConnection();
+            pipeServerStream!.WaitForConnection();
             try
             {
                 pipeServerStream.CopyTo(Console.OpenStandardOutput());
             }
             finally
             {
-                stopEvent.Set();
+                stopEvent!.Set();
             }
         }
 
@@ -89,14 +88,14 @@ namespace ClashServiceWrapper
         {
             try
             {
-                if (pipeServerStream.IsConnected)
+                if (pipeServerStream!.IsConnected)
                 {
-                    pipeServerStream.Disconnect();
+                    pipeServerStream!.Disconnect();
                 }
             }
             finally
             {
-                pipeServerStream.Close();
+                pipeServerStream!.Close();
             }
         }
 
@@ -140,7 +139,6 @@ namespace ClashServiceWrapper
             finally
             {
                 svc.Close();
-                svc.Dispose();
             }
         }
 

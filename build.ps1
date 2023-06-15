@@ -4,20 +4,10 @@ if($args.Count -eq 0)
 }
 elseif ($args.Count -eq 1)
 {
-    if($args[0] -eq "all")
-    {
-        $target=$PSScriptRoot+"\ClashServiceWrapper.sln"
-    }
-    elseif($args[0] -eq "host")
-    {
-        $target=$PSScriptRoot+"\Host\Host.csproj"
-    }
-    elseif($args[0] -eq "client")
-    {
-        $target=$PSScriptRoot+"\Client\Client.csproj"
-    }
+    $name = $args[0]
+    $target=$PSScriptRoot+"\$name\$name.csproj"
 }
-if (Test-Path variable:target)
+if (Test-Path -Path $target)
 {
     $optdir=$PSScriptRoot+"\publish"
     dotnet publish -r win-x64 -c Release --self-contained $target -o $optdir

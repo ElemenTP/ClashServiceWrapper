@@ -1,4 +1,5 @@
 ﻿using System.Security.AccessControl;
+using System.Security.Principal;
 
 namespace ClashServiceWrapper
 {
@@ -19,6 +20,13 @@ namespace ClashServiceWrapper
                 hmutex = null;
             }
             return createdNew;
+        }
+
+        public static void HostSetACL()
+        {
+            MutexSecurity mSec = hmutex!.GetAccessControl();
+            mSec.SetAccessRule(new MutexAccessRule(new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null), MutexRights.Delete | MutexRights.Modify | MutexRights.Synchronize | MutexRights.TakeOwnership, AccessControlType.Allow));
+            hmutex!.SetAccessControl(mSec);
         }
 
         public static bool ClientGetIsFirstInstance()

@@ -8,10 +8,11 @@ namespace ClashServiceWrapper
     public sealed class WrapperService : ServiceBase
     {
         private Process? process;
-        private volatile NamedPipeClientStream? pipeClientStream;
+        private NamedPipeClientStream? pipeClientStream;
         private readonly ManualResetEventSlim stopEvent;
-        private volatile bool stopTriggered = false;
-        private volatile bool notExpected = false;
+        private readonly AtomicBool stopTriggered;
+        private bool notExpected = false;
+        private bool mon = false;
 
         public WrapperService()
         {
@@ -21,40 +22,47 @@ namespace ClashServiceWrapper
             CanPauseAndContinue = false;
             AutoLog = false;
             stopEvent = new();
+            stopTriggered = new();
         }
 
         protected override void OnStart(string[] args)
         {
-            if (args.Length != 2)
+            switch (args.Length)
             {
-                Stop();
-                return;
-            }
-            try
-            {
-                pipeClientStream = new(".", args[0], PipeDirection.Out, PipeOptions.WriteThrough | PipeOptions.Asynchronous);
-                pipeClientStream.Connect(500);
-            }
-            catch
-            {
-                Stop();
-                return;
+                case 1:
+                    break;
+                case 2:
+                    mon = true;
+                    try
+                    {
+                        pipeClientStream = new(".", args[1], PipeDirection.Out, PipeOptions.WriteThrough | PipeOptions.Asynchronous);
+                        pipeClientStream.Connect(500);
+                    }
+                    catch
+                    {
+                        Stop();
+                        return;
+                    }
+                    Task.Run(CheckHealth);
+                    break;
+                default:
+                    Stop();
+                    return;
             }
             Task.Run(() =>
             {
                 stopEvent.Wait();
-                if (!stopTriggered)
+                if (!stopTriggered.Get())
                 {
                     Stop();
                 }
             });
-            Task.Run(CheckHealth);
             try
             {
                 ProcessStartInfo info = new()
                 {
                     FileName = "\"" + Constant.exeDir + Constant.clashName + "\"",
-                    Arguments = args[1],
+                    Arguments = args[0],
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     ErrorDialog = true,
@@ -79,41 +87,47 @@ namespace ClashServiceWrapper
                     catch { }
                 };
                 process.EnableRaisingEvents = true;
-                Task.Run(() =>
-                {
-                    try
-                    {
-                        process.StandardOutput.BaseStream.CopyTo(pipeClientStream);
-                    }
-                    catch { }
-                    finally
-                    {
-                        stopEvent.Set();
-                    }
-                });
-                Task.Run(() =>
-                {
-                    try
-                    {
-                        process.StandardError.BaseStream.CopyTo(pipeClientStream);
-                    }
-                    catch { }
-                    finally
-                    {
-                        stopEvent.Set();
-                    }
-                });
             }
             catch (Exception e)
             {
-                try
+                if (mon)
                 {
-                    byte[] b = Encoding.UTF8.GetBytes(e.Message + "\n");
-                    pipeClientStream!.Write(b);
+                    try
+                    {
+                        byte[] b = Encoding.UTF8.GetBytes(e.Message + "\n");
+                        pipeClientStream!.Write(b);
+                    }
+                    catch { }
                 }
-                catch { }
                 Stop();
                 return;
+            }
+            if (mon)
+            {
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        process.StandardOutput.BaseStream.CopyTo(pipeClientStream!);
+                    }
+                    catch { }
+                    finally
+                    {
+                        stopEvent.Set();
+                    }
+                });
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        process.StandardError.BaseStream.CopyTo(pipeClientStream!);
+                    }
+                    catch { }
+                    finally
+                    {
+                        stopEvent.Set();
+                    }
+                });
             }
         }
 
@@ -121,8 +135,7 @@ namespace ClashServiceWrapper
         {
             try
             {
-                using Mutex mutex = Mutex.OpenExisting("Global\\ClashServiceClient");
-                mutex.WaitOne();
+                SingleInstance.HostWaitForClient();
             }
             catch { }
             finally
@@ -147,14 +160,14 @@ namespace ClashServiceWrapper
 
         private void DoStop()
         {
-            stopTriggered = true;
+            stopTriggered.Set(true);
             if (process != null)
             {
                 if (!process.HasExited)
                 {
                     StopProcess();
                 }
-                else if (notExpected && pipeClientStream!.IsConnected)
+                else if (mon && notExpected && pipeClientStream!.IsConnected)
                 {
                     try
                     {
@@ -164,7 +177,6 @@ namespace ClashServiceWrapper
                     catch { }
                 }
                 process.Close();
-                process.Dispose();
             }
             if (pipeClientStream != null)
             {
@@ -178,7 +190,6 @@ namespace ClashServiceWrapper
                     catch { }
                 }
                 pipeClientStream.Close();
-                pipeClientStream.Dispose();
             }
         }
 
